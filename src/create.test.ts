@@ -11,8 +11,10 @@ describe('create', () => {
         | { status: 201; data: State['comments'][string] }
         | { status: 400; msg: string }
       >;
+      onType: () => Promise<{ status: 200 }>;
     };
     type State = {
+      peerLastTypeEPOCH: number;
       inputValue: string;
       inputCommentId: string;
       comments: {
@@ -29,9 +31,10 @@ describe('create', () => {
       onInputChange: (e: { target: { value: string } }) => void;
       commitComment: () => Promise<void>;
       editComment: (c: State['comments'][string]) => void;
+      resetComment: () => void;
     };
 
-    const client = create<Rpcs, State, Actions>(({ call, set, get }) => ({
+    const client = create<Rpcs, State, Actions>(({ rpc, lpc, set, get }) => ({
       rpcs: {
         putComment: async (data, meta) => {
           if (data.text.length > 100000) {
@@ -69,11 +72,16 @@ describe('create', () => {
           }));
           return { status: 200, data: next };
         },
+        onType: async (_, meta) => {
+          set({ peerLastTypeEPOCH: meta.sentEPOC });
+          return { status: 200 };
+        },
       },
       state: {
         inputValue: '',
         inputCommentId: '',
         comments: {},
+        peerLastTypeEPOCH: 0,
       },
       lpcs: {
         onInputChange: (e: any) => {
@@ -82,9 +90,12 @@ describe('create', () => {
         editComment: c => {
           set({ inputCommentId: c.id, inputValue: c.text });
         },
+        resetComment: () => {
+          set({ inputCommentId: '', inputValue: '' });
+        },
         commitComment: async () => {
           const state = get();
-          const res = await call('putComment', {
+          const res = await rpc('putComment', {
             text: state.inputValue,
             id: state.inputCommentId,
           });
@@ -93,6 +104,7 @@ describe('create', () => {
             return;
           }
           if (status === 200 || status === 201) {
+            lpc('resetComment', undefined);
             set(prev => ({
               ...prev,
               comments: {
