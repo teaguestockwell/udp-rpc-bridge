@@ -1,0 +1,81 @@
+{
+  "name": "observable-slice",
+  "version": "0.0.20",
+  "description": "An observable for global state that can be subscribed to with react hooks, or callbacks",
+  "license": "MIT",
+  "typings": "dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.modern.js"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.module.js",
+  "unpkg": "./dist/index.umd.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teaguestockwell/observable-slice"
+  },
+  "bugs": {
+    "url": "https://github.com/teaguestockwell/observable-slice/issues"
+  },
+  "homepage": "https://github.com/teaguestockwell/observable-slice",
+  "keywords": [
+    "redux",
+    "zustand",
+    "jotai",
+    "rxjs",
+    "state",
+    "mobx",
+    "xstate"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "microbundle --sourcemap false --tsconfig tsconfig.json --visualize --external react",
+    "test": "tsdx test",
+    "lint": "tsdx lint src",
+    "prepare": "yarn build"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "author": {
+    "name": "Teague Stockwell",
+    "email": "tsappdevelopment@gmail.com",
+    "url": "https://teaguestockwell.com"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^13.3.0",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.5",
+    "@types/use-sync-external-store": "^0.0.3",
+    "babel-jest": "^29.2.2",
+    "husky": "^8.0.1",
+    "microbundle": "^0.15.0",
+    "react": "^18.1.0",
+    "react-dom": "^18.2.0",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.7.2"
+  },
+  "dependencies": {
+    "use-sync-external-store": "^1.2.0"
+  }
+}
