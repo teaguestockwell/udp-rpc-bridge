@@ -1,7 +1,7 @@
 {
-  "name": "observable-slice",
-  "version": "0.0.20",
-  "description": "An observable for global state that can be subscribed to with react hooks, or callbacks",
+  "name": "udp-rpc-bridge",
+  "version": "0.0.1",
+  "description": "produce reliable, type safe udp client pairs",
   "license": "MIT",
   "typings": "dist/index.d.ts",
   "sideEffects": false,
@@ -14,12 +14,12 @@
   "unpkg": "./dist/index.umd.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/teaguestockwell/observable-slice"
+    "url": "https://github.com/teaguestockwell/udp-rpc-bridge"
   },
   "bugs": {
-    "url": "https://github.com/teaguestockwell/observable-slice/issues"
+    "url": "https://github.com/teaguestockwell/udp-rpc-bridge/issues"
   },
-  "homepage": "https://github.com/teaguestockwell/observable-slice",
+  "homepage": "https://github.com/teaguestockwell/udp-rpc-bridge",
   "keywords": [
     "redux",
     "zustand",
@@ -37,7 +37,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "microbundle --sourcemap false --tsconfig tsconfig.json --visualize --external react",
+    "build": "microbundle --sourcemap false --tsconfig tsconfig.json --visualize",
     "test": "tsdx test",
     "lint": "tsdx lint src",
     "prepare": "yarn build"
@@ -62,10 +62,6 @@
     "url": "https://teaguestockwell.com"
   },
   "devDependencies": {
-    "@testing-library/react": "^13.3.0",
-    "@types/react": "^18.0.9",
-    "@types/react-dom": "^18.0.5",
-    "@types/use-sync-external-store": "^0.0.3",
     "babel-jest": "^29.2.2",
     "husky": "^8.0.1",
     "microbundle": "^0.15.0",
@@ -74,8 +70,5 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^4.7.2"
-  },
-  "dependencies": {
-    "use-sync-external-store": "^1.2.0"
   }
 }
