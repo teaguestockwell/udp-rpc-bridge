@@ -1,7 +1,5 @@
-type Meta = { callerId: string; requestId: string };
-
 export const create = <
-  Rpc extends {
+  Rpcs extends {
     [rpc: string]: (data: any) => Promise<any>;
   },
   State,
@@ -9,12 +7,22 @@ export const create = <
     [name: string]: (arg?: any) => any;
   }
 >(
-  produce: <RPC extends keyof Rpc>(api: {
-    call: (rpc: RPC, data: Parameters<Rpc[RPC]>) => ReturnType<Rpc[RPC]>;
+  produce: <Rpc extends keyof Rpcs>(api: {
+    call: (rpc: Rpc, data: Parameters<Rpcs[Rpc]>[0]) => ReturnType<Rpcs[Rpc]>;
     set: (next: Partial<State> | ((prev: State) => Partial<State>)) => void;
     get: () => State;
   }) => {
-    rpc: Rpc;
+    rpcs: {
+      [K in keyof Rpcs]: (
+        data: Parameters<Rpcs[K]>[0],
+        meta: {
+          callerId: number;
+          requestId: number;
+          receivedEPOC: number;
+          sentEPOC: number;
+        }
+      ) => ReturnType<Rpcs[K]>;
+    };
     state?: State;
     actions?: Actions;
   }
