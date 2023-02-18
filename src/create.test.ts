@@ -27,6 +27,8 @@ describe('create', () => {
     type Actions = {
       onCommentChange: (e: { target: { value: string } }) => void;
       sendComment: () => Promise<void>;
+      createComment: (c: State['comments'][string]) => void;
+      updateComment: (c: State['comments'][string]) => void;
     };
 
     const client = create<Rpcs, State, Actions>(({ call, set, get }) => ({
@@ -72,14 +74,13 @@ describe('create', () => {
         inputValue: '',
         comments: {},
       },
-      actions: {
+      lpcs: {
         onCommentChange: (e: any) => {
           set({ inputValue: e.target.value });
         },
         sendComment: async () => {
-          const {inputValue} = get()
-          
-        }
+          const { inputValue } = get();
+        },
       },
     }));
 
