@@ -7,13 +7,14 @@ describe('create', () => {
         id?: string;
         text: string;
       }) => Promise<
-        | { status: 200; data: { id: string; text: string } }
-        | { status: 201; data: { id: string; text: string } }
+        | { status: 200; data: State['comments'][string] }
+        | { status: 201; data: State['comments'][string] }
         | { status: 400; msg: string }
       >;
     };
     type State = {
       inputValue: string;
+      inputCommentId: string;
       comments: {
         [id: string]: {
           id: string;
@@ -25,10 +26,9 @@ describe('create', () => {
       };
     };
     type Actions = {
-      onCommentChange: (e: { target: { value: string } }) => void;
-      sendComment: () => Promise<void>;
-      createComment: (c: State['comments'][string]) => void;
-      updateComment: (c: State['comments'][string]) => void;
+      onInputChange: (e: { target: { value: string } }) => void;
+      commitComment: () => Promise<void>;
+      editComment: (c: State['comments'][string]) => void;
     };
 
     const client = create<Rpcs, State, Actions>(({ call, set, get }) => ({
@@ -72,14 +72,37 @@ describe('create', () => {
       },
       state: {
         inputValue: '',
+        inputCommentId: '',
         comments: {},
       },
       lpcs: {
-        onCommentChange: (e: any) => {
+        onInputChange: (e: any) => {
           set({ inputValue: e.target.value });
         },
-        sendComment: async () => {
-          const { inputValue } = get();
+        editComment: c => {
+          set({ inputCommentId: c.id, inputValue: c.text });
+        },
+        commitComment: async () => {
+          const state = get();
+          const res = await call('putComment', {
+            text: state.inputValue,
+            id: state.inputCommentId,
+          });
+          const { status } = res;
+          if (status === 400) {
+            return;
+          }
+          if (status === 200 || status === 201) {
+            set(prev => ({
+              ...prev,
+              comments: {
+                ...prev.comments,
+                [res.data.id]: res.data,
+              },
+            }));
+            return;
+          }
+          return status;
         },
       },
     }));

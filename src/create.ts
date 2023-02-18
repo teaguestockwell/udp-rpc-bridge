@@ -2,7 +2,7 @@ export const create = <
   Rpcs extends {
     [rpc: string]: (data: any) => Promise<any>;
   },
-  State,
+  State extends object,
   Lpcs extends {
     [name: string]: (arg?: any) => any;
   }
@@ -10,11 +10,14 @@ export const create = <
   /**
    * produce a client for local and remove pub sub
    */
-  produce: <Rpc extends keyof Rpcs>(api: {
+  produce: (api: {
     /**
      * call remote procedure with retry until acknowledgement
      */
-    call: (rpc: Rpc, data: Parameters<Rpcs[Rpc]>[0]) => ReturnType<Rpcs[Rpc]>;
+    call: <Rpc extends keyof Rpcs>(
+      rpc: Rpc,
+      data: Parameters<Rpcs[Rpc]>[0]
+    ) => ReturnType<Rpcs[Rpc]>;
     /**
      * set local state and notify local observers
      */
@@ -22,7 +25,7 @@ export const create = <
     /**
      * get local state
      */
-    get: () => State;
+    get: () => State
   }) => {
     /**
      * handlers for each remote procedure subscription
