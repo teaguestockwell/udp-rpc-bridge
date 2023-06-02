@@ -1,3 +1,5 @@
+type Chunk = {i: number, eof: boolean, data: any, rpc: string}
+
 export const create = <
   Rpcs extends {
     [rpc: string]: (arg: any) => Promise<any>;
@@ -10,15 +12,14 @@ export const create = <
     /**
      * call remote procedure with retry until acknowledgement
      */
-    rpc: <Rpc extends keyof Rpcs>(
-      rpc: Rpc,
+    rpc: {[Rpc in keyof Rpcs]: (
       data: Parameters<Rpcs[Rpc]>[0],
       progress?: (e: {
         total: number;
         current: number;
         percent: number;
       }) => void
-    ) => ReturnType<Rpcs[Rpc]>;
+    ) => ReturnType<Rpcs[Rpc]>;}
     /**
      * call local procedure
      */
@@ -71,11 +72,10 @@ export const create = <
   }
 ) => {
   let state: any;
+  let pipe: undefined | {emit: (chunk: Chunk, callback: (data: any) => void) => void, subscribe: (cb: (chunk: Chunk) => void) => void};
   const subs = new Set<any>();
   const api: any = {
-    rpc: async (rpc: any, data: any) => {
-      // todo: batching, encoding, acks, retry, progress cb, idempotency
-    },
+    rpc: null,
     lpc: null,
     set: (exp: any) => {
       if (typeof exp === 'function') {
@@ -96,8 +96,19 @@ export const create = <
   };
 
   const res = produce(api);
-  api.lpc = (k: any, data: any) => {
+  state = res.state ?? ({} as State);
+  api.setPipe = (_pipe: any) => {
+    pipe =  _pipe
+  }
+  api.lpc = <K extends keyof Lpcs>(k: K, data: Parameters<Lpcs[K]>) => {
     return res.lpcs?.[k]?.(data);
   };
+  api.rpc = {}
+  Object.entries(res.rpcs).forEach(([k, v]) => {
+    api.rpc[k] = (data: any, options: any) => {
+
+    }
+  })
+
   return api as Api;
 };

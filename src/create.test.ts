@@ -11,7 +11,7 @@ describe('create', () => {
         | { status: 201; data: State['comments'][string] }
         | { status: 400; msg: string }
       >;
-      onType: () => Promise<{ status: 200 }>;
+      onType: (data: undefined) => Promise<{ status: 200 }>;
     };
     type State = {
       peerLastTypeEPOCH: number;
@@ -95,7 +95,7 @@ describe('create', () => {
         },
         commitComment: async () => {
           const state = get();
-          const res = await rpc('putComment', {
+          const res = await rpc.putComment({
             text: state.inputValue,
             id: state.inputCommentId,
           });
