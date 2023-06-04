@@ -37,40 +37,40 @@ describe('create', () => {
     const client = create<Rpcs, State, Actions>(({ rpc, lpc, set, get }) => ({
       rpcs: {
         putComment: async (data, meta) => {
-          if (data.text.length > 100000) {
-            return { status: 400, msg: 'to long' };
-          }
-          const prevData = get().comments[data.id ?? ''];
-          if (!prevData) {
-            const id = Date.now() + '';
+            if (data.text.length > 100000) {
+              return { status: 400, msg: 'to long' };
+            }
+            const prevData = get().comments[data.id ?? ''];
+            if (!prevData) {
+              const id = Date.now() + '';
+              const next = {
+                id,
+                authorId: meta.callerId,
+                text: data.text,
+                createdAt: meta.sentEPOC,
+                updatedAt: meta.sentEPOC,
+              };
+              set(prev => ({
+                ...prev,
+                comments: { ...prev.comments, [id]: next },
+              }));
+              return { status: 201, data: next };
+            }
             const next = {
-              id,
+              id: prevData.id,
               authorId: meta.callerId,
               text: data.text,
-              createdAt: meta.sentEPOC,
+              createdAt: prevData.createdAt,
               updatedAt: meta.sentEPOC,
             };
             set(prev => ({
               ...prev,
-              comments: { ...prev.comments, [id]: next },
+              comments: {
+                ...prev.comments,
+                [prevData.id]: next,
+              },
             }));
-            return { status: 201, data: next };
-          }
-          const next = {
-            id: prevData.id,
-            authorId: meta.callerId,
-            text: data.text,
-            createdAt: prevData.createdAt,
-            updatedAt: meta.sentEPOC,
-          };
-          set(prev => ({
-            ...prev,
-            comments: {
-              ...prev.comments,
-              [prevData.id]: next,
-            },
-          }));
-          return { status: 200, data: next };
+            return { status: 200, data: next };
         },
         onType: async (_, meta) => {
           set({ peerLastTypeEPOCH: meta.sentEPOC });
@@ -104,7 +104,7 @@ describe('create', () => {
             return;
           }
           if (status === 200 || status === 201) {
-            lpc('resetComment', undefined);
+            lpc.resetComment(undefined);
             set(prev => ({
               ...prev,
               comments: {

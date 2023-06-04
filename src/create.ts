@@ -1,4 +1,4 @@
-type Chunk = {i: number, eof: boolean, data: any, rpc: string}
+type Chunk = { i: number; eof: boolean; data: any; rpc: string };
 
 export const create = <
   Rpcs extends {
@@ -12,22 +12,20 @@ export const create = <
     /**
      * call remote procedure with retry until acknowledgement
      */
-    rpc: {[Rpc in keyof Rpcs]: (
-      data: Parameters<Rpcs[Rpc]>[0],
-      progress?: (e: {
-        total: number;
-        current: number;
-        percent: number;
-      }) => void
-    ) => ReturnType<Rpcs[Rpc]>;}
+    rpc: {
+      [Rpc in keyof Rpcs]: (
+        data: Parameters<Rpcs[Rpc]>[0]
+      ) => ReturnType<Rpcs[Rpc]>;
+    };
     /**
      * call local procedure
      */
-    lpc: <Lpc extends keyof Lpcs>(
-      lpc: Lpc,
-      data: Parameters<Lpcs[Lpc]>[0]
-    ) => ReturnType<Lpcs[Lpc]>;
-    /**
+    lpc: {
+      [Lpc in keyof Lpcs]: (
+        data: Parameters<Lpcs[Lpc]>[0]
+      ) => ReturnType<Lpcs[Lpc]>;
+    };
+    /*
      * set local state and notify local observers
      */
     set: (next: Partial<State> | ((prev: State) => Partial<State>)) => void;
@@ -72,7 +70,12 @@ export const create = <
   }
 ) => {
   let state: any;
-  let pipe: undefined | {emit: (chunk: Chunk, callback: (data: any) => void) => void, subscribe: (cb: (chunk: Chunk) => void) => void};
+  let pipe:
+    | undefined
+    | {
+        emit: (chunk: Chunk, callback: (data: any) => void) => void;
+        subscribe: (cb: (chunk: Chunk) => void) => void;
+      };
   const subs = new Set<any>();
   const api: any = {
     rpc: null,
@@ -98,17 +101,13 @@ export const create = <
   const res = produce(api);
   state = res.state ?? ({} as State);
   api.setPipe = (_pipe: any) => {
-    pipe =  _pipe
-  }
-  api.lpc = <K extends keyof Lpcs>(k: K, data: Parameters<Lpcs[K]>) => {
-    return res.lpcs?.[k]?.(data);
+    pipe = _pipe;
   };
-  api.rpc = {}
+  api.lpc = res.lpcs
+  api.rpc = {};
   Object.entries(res.rpcs).forEach(([k, v]) => {
-    api.rpc[k] = (data: any, options: any) => {
-
-    }
-  })
+    api.rpc[k] = (data: any) => {};
+  });
 
   return api as Api;
 };
