@@ -67,7 +67,7 @@ const createFileClient = () => {
       [id: string]: {
         id: string;
         text: string;
-        authorId: number;
+        authorId: string;
         createdAt: number;
         updatedAt: number;
       };
@@ -103,10 +103,10 @@ const createFileClient = () => {
           const id = Date.now() + '';
           const next = {
             id,
-            authorId: meta.callerId,
+            authorId: meta.fromClientId,
             text: data.text,
-            createdAt: meta.sentEPOC,
-            updatedAt: meta.sentEPOC,
+            createdAt: meta.sentEpoch,
+            updatedAt: meta.sentEpoch,
           };
           set(prev => ({
             ...prev,
@@ -116,10 +116,10 @@ const createFileClient = () => {
         }
         const next = {
           id: prevData.id,
-          authorId: meta.callerId,
+          authorId: meta.fromClientId,
           text: data.text,
           createdAt: prevData.createdAt,
-          updatedAt: meta.sentEPOC,
+          updatedAt: meta.sentEpoch,
         };
         set(prev => ({
           ...prev,
@@ -131,7 +131,7 @@ const createFileClient = () => {
         return { status: 200, data: next };
       },
       onType: async (_, meta) => {
-        set({ peerLastTypeEPOCH: meta.sentEPOC });
+        set({ peerLastTypeEPOCH: meta.sentEpoch });
         return { status: 200 };
       },
       getChunk: ({ id, left, right }) => {

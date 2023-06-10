@@ -1,15 +1,21 @@
-const s = () =>
-  Math.floor((1 + Math.random()) * 0x10000)
+const s = () => {
+  return Math.floor((1 + Math.random()) * 0x10000)
     .toString(16)
     .substring(1);
+};
 
-export const guid = () =>
-  `${s()}${s()}-${s()}-${s()}-${s()}-${s()}${s()}${s()}`;
+export const guid = () => s() + s() + s() + s() + s() + s() + s() + s();
 
-// easy to serialize, and collision resistant enough
-const idField = 'dac3b6f2-de95-4dc7-8767-c768a1f87ec2';
-const procedureField = 'cf92b78a-183a-4e81-a214-632cfeaf6c0f';
-const procedureVariantField = '25a25b76-ed4e-424b-8d27-55560b83a4cf';
+type Message = {
+  reqId: string;
+  resId: string;
+  fromClientId: string;
+  method: string;
+  sentEpoch: number;
+  receivedEpoch: number;
+  resTime: number;
+  data?: any;
+};
 
 export const create = <
   Rpcs extends {
@@ -66,12 +72,7 @@ export const create = <
     rpcs: {
       [K in keyof Rpcs]: (
         data: Parameters<Rpcs[K]>[0],
-        meta: {
-          callerId: number;
-          requestId: number;
-          receivedEPOC: number;
-          sentEPOC: number;
-        }
+        meta: Message
       ) => ReturnType<Rpcs[K]>;
     };
     /**
@@ -82,10 +83,14 @@ export const create = <
      * handlers for each local procedure
      */
     lpcs?: Lpcs;
+  },
+  options?: {
+    clientId: string;
   }
 ) => {
   let state: any;
   const subs = new Set<any>();
+  const clientId = options?.clientId ?? guid();
   const inFlightRequest: { [id: string]: (e: any) => void } = {};
   let res: ReturnType<typeof produce> | undefined;
   const api: any = {
@@ -107,31 +112,30 @@ export const create = <
     },
     pipe: {
       send: null,
-      receive: async (e: any) => {
-        const id = e[idField];
-        const procedure = e[procedureField];
-        const procedureVariant = e[procedureVariantField];
-        delete e[idField];
-        delete e[procedureField];
-        delete e[procedureVariantField];
-        if (procedureVariant === 'res') {
-          const resolver = inFlightRequest[id];
-          if (!resolver) throw 'cant find request for response';
-          resolver(e);
+      receive: async (e: Message) => {
+        if (!e.reqId) {
+          throw 'cant handle unknown messages';
+        }
+        if (e.resId) {
+          const resolver = inFlightRequest[e.reqId];
+          if (!resolver) return;
+          resolver(e.data);
+          delete inFlightRequest[e.reqId]
           return;
         }
-        if (procedureVariant === 'req') {
-          const handler = res?.rpcs?.[procedure];
-          if (!handler) throw 'no handler for ' + procedure;
-          // todo populate metadata
-          const resData = (await handler(e, {} as any)) as any;
-          resData[idField] = id;
-          resData[procedureField] = procedure;
-          resData[procedureVariantField] = 'res';
-          api.pipe.send(resData);
+        if (e.reqId) {
+          const handler = res?.rpcs?.[e.method];
+          if (!handler) throw 'no handler for ' + e.method;
+          const { data: d, ...meta } = e;
+          const data = await handler(d, meta);
+          const message = {
+            ...meta,
+            resId: guid(),
+            data,
+          };
+          api.pipe.send(message);
           return;
         }
-        throw 'cant handle events of unknown procedure';
       },
     },
   };
@@ -139,18 +143,25 @@ export const create = <
   res = produce(api);
   state = res.state ?? ({} as State);
   api.lpc = res.lpcs;
-  Object.entries(res.rpcs).forEach(([k]) => {
-    api.rpc[k] = (data: any) => {
+  Object.entries(res.rpcs).forEach(([method]) => {
+    api.rpc[method] = (data: any) => {
       if (!api.pipe.send) {
         throw 'must set api.pipe.send before rpcs can be used';
       }
-      const id = guid();
-      data[idField] = id;
-      data[procedureField] = k;
-      data[procedureVariantField] = 'req';
-      api.pipe.send(data);
+      const reqId = guid();
+      const message: Message = {
+        reqId,
+        resId: '',
+        fromClientId: clientId,
+        method,
+        sentEpoch: performance.now(),
+        receivedEpoch: 0,
+        resTime: 0,
+        data,
+      };
+      api.pipe.send(message);
       return new Promise(resolve => {
-        inFlightRequest[id] = resolve;
+        inFlightRequest[reqId] = resolve;
       });
     };
   });
