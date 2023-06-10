@@ -89,12 +89,12 @@ export const create = <
   const inFlightRequest: { [id: string]: (e: any) => void } = {};
   let res: ReturnType<typeof produce> | undefined;
   const api: any = {
-    rpc: null,
-    lpc: null,
+    rpc: {},
+    lpc: {},
     set: (exp: any) => {
       state = {
         ...state,
-        ...(typeof exp === 'function' ? exp(state) : state),
+        ...(typeof exp === 'function' ? exp(state) : exp),
       };
       subs.forEach(s => s(state));
     },
@@ -139,7 +139,6 @@ export const create = <
   res = produce(api);
   state = res.state ?? ({} as State);
   api.lpc = res.lpcs;
-  api.rpc = {};
   Object.entries(res.rpcs).forEach(([k]) => {
     api.rpc[k] = (data: any) => {
       if (!api.pipe.send) {
