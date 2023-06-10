@@ -209,4 +209,32 @@ describe('create', () => {
 
     expect(client).toBeTruthy();
   });
+  it("sends simple messages", async () => {
+    type RPC = {putMsg: (data: {msg: string}) => Promise<{status: 200}>}
+    type State = {msgs: string[]}
+    type LPC = {onType: (s: string) => void}
+    const getClient = () => create<RPC, State, LPC>(({set}) => ({
+      state: {
+        msgs: []
+      },
+      rpcs: {
+        putMsg: async (data) => {
+          set(p => ({msgs: [...p.msgs, data.msg]}))
+          return {status: 200}
+        }
+      },
+      lpcs: {
+        onType: () => {}
+      }
+    }))
+
+    const client0 = getClient()
+    const client1 = getClient()
+    client0.pipe.send = client1.pipe.receive
+    client1.pipe.send = client0.pipe.receive
+    expect(client1.get().msgs.length).toBe(0)
+    await client0.rpc.putMsg({msg: 'hey'})
+
+    expect(client1.get().msgs.length).toBe(1)
+  })
 });

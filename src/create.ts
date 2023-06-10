@@ -86,17 +86,16 @@ export const create = <
 ) => {
   let state: any;
   const subs = new Set<any>();
-  const inFlightRequest: { [id: string]: { resolve: (e: any) => void } } = {};
+  const inFlightRequest: { [id: string]: (e: any) => void } = {};
+  let res: ReturnType<typeof produce> | undefined;
   const api: any = {
     rpc: null,
     lpc: null,
     set: (exp: any) => {
-      if (typeof exp === 'function') {
-        const partial = exp(state);
-        state = { ...state, partial };
-      } else {
-        state = { ...state, ...exp };
-      }
+      state = {
+        ...state,
+        ...(typeof exp === 'function' ? exp(state) : state),
+      };
       subs.forEach(s => s(state));
     },
     get: () => state,
@@ -116,40 +115,43 @@ export const create = <
         delete e[procedureField];
         delete e[procedureVariantField];
         if (procedureVariant === 'res') {
-          const req = inFlightRequest[id];
-          if (!req) throw 'cant find request for response';
-          req.resolve(e);
+          const resolver = inFlightRequest[id];
+          if (!resolver) throw 'cant find request for response';
+          resolver(e);
+          return;
         }
-        if (procedure === 'req') {
-          const handler = api.rpc[procedure];
+        if (procedureVariant === 'req') {
+          const handler = res?.rpcs?.[procedure];
           if (!handler) throw 'no handler for ' + procedure;
-          const resData = await handler(e);
+          // todo populate metadata
+          const resData = (await handler(e, {} as any)) as any;
           resData[idField] = id;
-          resData[procedure] = procedure;
-          resData[procedureVariant] = 'res';
+          resData[procedureField] = procedure;
+          resData[procedureVariantField] = 'res';
           api.pipe.send(resData);
+          return;
         }
-        throw 'cant handle events of unknown procedure variant';
+        throw 'cant handle events of unknown procedure';
       },
     },
   };
 
-  const res = produce(api);
+  res = produce(api);
   state = res.state ?? ({} as State);
   api.lpc = res.lpcs;
   api.rpc = {};
-  Object.entries(res.rpcs).forEach(([k, v]) => {
+  Object.entries(res.rpcs).forEach(([k]) => {
     api.rpc[k] = (data: any) => {
-      if (!api._pipe) {
-        throw 'must set api._pipe before rpcs can be used';
+      if (!api.pipe.send) {
+        throw 'must set api.pipe.send before rpcs can be used';
       }
       const id = guid();
       data[idField] = id;
       data[procedureField] = k;
       data[procedureVariantField] = 'req';
-      api._pipe(data);
+      api.pipe.send(data);
       return new Promise(resolve => {
-        inFlightRequest[id] = { resolve };
+        inFlightRequest[id] = resolve;
       });
     };
   });
