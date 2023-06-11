@@ -120,7 +120,7 @@ export const create = <
           const resolver = inFlightRequest[e.reqId];
           if (!resolver) return;
           resolver(e.data);
-          delete inFlightRequest[e.reqId]
+          delete inFlightRequest[e.reqId];
           return;
         }
         if (e.reqId) {
@@ -142,7 +142,9 @@ export const create = <
 
   res = produce(api);
   state = res.state ?? ({} as State);
-  api.lpc = res.lpcs;
+  Object.entries(res.lpcs ?? {}).forEach(([method, fn]) => {
+    api.lpc[method] = fn;
+  });
   Object.entries(res.rpcs).forEach(([method]) => {
     api.rpc[method] = (data: any) => {
       if (!api.pipe.send) {
