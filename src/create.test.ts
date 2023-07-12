@@ -202,7 +202,7 @@ describe('create', () => {
     connectClients(a, b);
 
     a.lpc.typeMsg('hello b');
-    await a.lpc.sendMsg(undefined);
+    await a.lpc.sendMsg();
 
     expect(a.get().msg).toBe('');
     expect(a.get().isSending).toBe(false);
@@ -245,5 +245,23 @@ describe('create', () => {
     ).toBe(true);
     expect(Object.values(a.get().fileProgress).every(p => p === 1)).toBe(true);
     expect(Object.values(b.get().fileProgress).every(p => p === 1)).toBe(true);
+  });
+  it('has any return type for rpcs', () => {
+    create<{ test: () => Promise<1> }, {}, { test2: () => void }>(
+      ({ rpc, lpc }) => ({
+        state: {},
+        rpcs: {
+          test: async () => {
+            lpc.test2();
+            return 1;
+          },
+        },
+        lpcs: {
+          test2: () => {
+            rpc.test();
+          },
+        },
+      })
+    );
   });
 });

@@ -19,7 +19,7 @@ type Message = {
 
 export const create = <
   Rpcs extends {
-    [rpc: string]: (arg: any) => Promise<object>;
+    [rpc: string]: (arg: any) => Promise<any>;
   },
   State extends object,
   Lpcs extends {
@@ -31,7 +31,9 @@ export const create = <
      */
     rpc: {
       [Rpc in keyof Rpcs]: (
-        data: Parameters<Rpcs[Rpc]>[0]
+        data: Parameters<Rpcs[Rpc]>[0] extends undefined
+          ? void | undefined
+          : Parameters<Rpcs[Rpc]>[0]
       ) => ReturnType<Rpcs[Rpc]>;
     };
     /**
@@ -39,7 +41,9 @@ export const create = <
      */
     lpc: {
       [Lpc in keyof Lpcs]: (
-        data: Parameters<Lpcs[Lpc]>[0]
+        data: Parameters<Lpcs[Lpc]>[0] extends undefined
+          ? void | undefined
+          : Parameters<Lpcs[Lpc]>[0]
       ) => ReturnType<Lpcs[Lpc]>;
     };
     /*
