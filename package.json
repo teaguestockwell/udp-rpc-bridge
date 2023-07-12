@@ -1,6 +1,6 @@
 {
   "name": "udp-rpc-bridge",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "produce reliable, type safe udp client pairs",
   "license": "MIT",
   "typings": "dist/index.d.ts",
