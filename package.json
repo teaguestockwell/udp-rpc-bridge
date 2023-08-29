@@ -41,7 +41,7 @@
     "build": "microbundle --sourcemap false --tsconfig tsconfig.json --visualize",
     "test": "tsdx test",
     "lint": "tsdx lint src",
-    "prepare": "yarn build"
+    "prepublishOnly": "yarn build"
   },
   "peerDependencies": {
     "react": ">=16"
