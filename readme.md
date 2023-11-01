@@ -20,7 +20,7 @@
   <h3 align="center">udp-rpc-bridge</h3>
 
   <p align="center">
-    produce reliable, type safe udp client pairs
+    produce type safe p2p state stores
     <br />
     <a href="https://github.com/teaguestockwell/udp-rpc-bridge/issues">Report Bug</a>
   </p>
